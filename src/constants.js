@@ -1,3 +1,3 @@
 export default {
-  DB_NAME: "sansario",
+  DB_NAME: "keep_note",
 };
