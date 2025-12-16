@@ -10,18 +10,29 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 
 const allowedOrigins = [
-  process.env.CLIENT_URL_LOCAL, // Local web
-  "http://localhost:3000", // Next.js (optional)
-  process.env.EXPO_URL_LOCAL, // Expo
-  "http://*", // Expo on device
-  process.env.CLIENT_URL_PROD, // Production
-];
+  "http://localhost:5173", 
+  "http://localhost:3000", 
+  process.env.CLIENT_URL_PROD,
+].filter(Boolean);
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      if (origin.startsWith("http://localhost")) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.log("❌ CORS BLOCKED:", origin);
+      callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
-    methods: ["POST", "PUT", "UPDATE", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
