@@ -27,7 +27,9 @@ const userSchema = new Schema(
       trim: true,
     },
     avatar: {
-      type: String,
+      original: String,
+      thumb: String,
+      large: String,
     },
     todoRefreshToken: {
       type: String,

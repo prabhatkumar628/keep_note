@@ -19,24 +19,9 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) {
-        return callback(null, true);
-      }
-
-      const isAllowed = allowedOrigins.some((o) => {
-        if (!o) return false;
-        return origin.startsWith(o);
-      });
-
-      if (isAllowed) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("CORS Not Allowed: " + origin), false);
-      }
-    },
+    origin: "http://localhost:5173",
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    methods: ["POST", "PUT", "UPDATE", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );

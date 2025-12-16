@@ -1,6 +1,8 @@
 import User from "../models/user.model.js";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import fs from "fs";
+import { processAvatar } from "../utils/imageProcessor.js";
 
 const generateToken = async (user) => {
   const todoAccessToken = user.generateAccessToken();
@@ -20,8 +22,11 @@ const generateUniqueUsername = async (prefix = "user") => {
 };
 
 const options = {
-  httpOnly: true,
-  secure: true,
+  httpOnly: true, // JS se access nahi
+  secure: true, // HTTPS required (Vercel + Render both HTTPS)
+  sameSite: "none", // ⭐ MOST IMPORTANT (cross-domain)
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  path: "/", // entire site
 };
 
 const registerUser = async (req, res) => {
@@ -58,7 +63,9 @@ const registerUser = async (req, res) => {
       .json({
         success: true,
         message: "register user successfull",
-        data: { todoAccessToken, todoRefreshToken, user: userData },
+        todoAccessToken,
+        todoRefreshToken,
+        data: userData,
       });
   } catch (error) {
     if (error.code == 11000) {
@@ -128,7 +135,9 @@ const loginUser = async (req, res) => {
       .json({
         success: true,
         message: "login successfull",
-        data: { todoAccessToken, todoRefreshToken, user: userData },
+        todoAccessToken,
+        todoRefreshToken,
+        data: userData,
       });
   } catch (error) {
     return res.status(500).json({
@@ -180,6 +189,74 @@ const getCurrentUser = async (req, res) => {
     }
   } catch (error) {
     return res.status(404).json({ success: false, message: "user not found" });
+  }
+};
+
+const uploadAvatar = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "No file" });
+
+    if (req.user.avatar?.original) {
+      const avatarDir = `public/uploads/users/avatars/${req.user._id}`;
+      if (fs.existsSync(avatarDir)) {
+        fs.rmSync(avatarDir, { recursive: true, force: true });
+      }
+    }
+    const avatar = await processAvatar(req.file, req.user._id);
+
+    req.user.avatar = avatar;
+    await req.user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "avatar upload successful!",
+      data: req.user,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const updateUser = async (req, res) => {
+  try {
+    const { username, fullname, email, password } = req.body;
+    let avatar;
+    const newData = {};
+    if (req.file) {
+      if (req.user.avatar?.original) {
+        const avatarDir = `public/uploads/users/avatars/${req.user._id}`;
+        if (fs.existsSync(avatarDir)) {
+          fs.rmSync(avatarDir, { recursive: true, force: true });
+        }
+      }
+      avatar = await processAvatar(req.file, req.user._id);
+    }
+    if (username) newData.username = username;
+    if (fullname) newData.fullname = fullname;
+    if (email) newData.email = email;
+    if (password) newData.password = password;
+    if (avatar) newData.avatar = avatar;
+
+    const userData = await User.findByIdAndUpdate(req.user._id, newData, {
+      new: true,
+    }).select("-password -refreshToken");
+
+    res.status(200).json({
+      success: true,
+      message: "user updated successfull!",
+      data: userData,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+      data: req.body,
+    });
   }
 };
 
@@ -249,4 +326,6 @@ export {
   logoutUser,
   getCurrentUser,
   refreshAccessToken,
+  uploadAvatar,
+  updateUser,
 };

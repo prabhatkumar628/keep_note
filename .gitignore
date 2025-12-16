@@ -16,6 +16,7 @@ logs/
 
 # Build
 dist/
+public
 build/
 
 # Cache
