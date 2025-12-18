@@ -39,5 +39,8 @@ app.use(
 
 import rootRoute from "./routes/root.route.js";
 app.use("/api/v1", rootRoute);
+app.get("/health", (req,res)=>{
+  res.status(200).send("ok")
+})
 
 export default app;
