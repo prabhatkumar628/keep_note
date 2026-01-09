@@ -14,7 +14,7 @@ const addTodo = async (req, res) => {
       title: title?.trim() ?? "",
       content: content?.trim() ?? "",
       labels: labels ?? [],
-      color: color ?? "#ffffff",
+      color: color ?? null,
       isPinned: isPinned ?? false,
       isArchived: isArchived ?? false,
       reminder: reminder ?? null,

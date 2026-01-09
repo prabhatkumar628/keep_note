@@ -20,7 +20,7 @@ const todoSchema = new Schema(
     ],
     color: {
       type: String,
-      default: "#ffffff",
+      default: null,
     },
     isPinned: {
       type: Boolean,
