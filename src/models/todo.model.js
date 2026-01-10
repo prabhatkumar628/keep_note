@@ -5,17 +5,17 @@ const todoSchema = new Schema(
     title: {
       type: String,
       default: "",
-      trim:true,
+      trim: true,
     },
     content: {
       type: String,
       default: "",
-      trim:true,
+      trim: true,
     },
     labels: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref:"Label"
+        ref: "Label",
       },
     ],
     color: {
@@ -33,6 +33,10 @@ const todoSchema = new Schema(
     isTrashed: {
       type: Boolean,
       default: false,
+    },
+    deletedAt: {
+      type: Date,
+      expires: "30d",
     },
     reminder: {
       type: Date,

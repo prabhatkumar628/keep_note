@@ -21,7 +21,10 @@ const addTodo = async (req, res) => {
       userId: req.user._id,
     });
 
-    const populatedTodo = await Todo.findById(todo._id).populate("labels","name");
+    const populatedTodo = await Todo.findById(todo._id).populate(
+      "labels",
+      "name"
+    );
 
     res.status(201).json({ success: true, data: populatedTodo });
   } catch (error) {
@@ -103,21 +106,74 @@ const updateTodo = async (req, res) => {
   }
 };
 
-const deleteTodo = async (req, res) => {
+export const restoreTodo = async (req, res) => {
   try {
     const { id } = req.params;
-    const todo = await Todo.findOneAndDelete({
-      _id: id,
-      userId: req.user._id,
-    });
+
+    const todo = await Todo.findOneAndUpdate(
+      { _id: id, userId: req.user._id },
+      { isTrashed: false, deletedAt: null },
+      { new: true }
+    );
+
     if (!todo) {
       return res
         .status(404)
-        .json({ success: false, data: { message: "todo not found" } });
+        .json({ success: false, message: "Todo not found" });
     }
-    return res.status(200).json({ success: true, data: todo });
+
+    res.status(200).json({
+      success: true,
+      message: "Todo restored",
+      data: todo,
+    });
   } catch (error) {
-    return res.status(500).json({ success: false, data: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const deleteTodo = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const todo = await Todo.findOne({
+      _id: id,
+      userId: req.user._id,
+    });
+
+    if (!todo) {
+      return res.status(404).json({
+        success: false,
+        message: "Todo not found",
+      });
+    }
+
+    if (!todo.isTrashed) {
+      todo.isTrashed = true;
+      todo.deletedAt = new Date();
+      todo.isArchived = false;
+      await todo.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Todo moved to trash",
+        type: "SOFT_DELETE",
+        data: todo,
+      });
+    }
+
+    await Todo.deleteOne({ _id: id });
+
+    return res.status(200).json({
+      success: true,
+      message: "Todo permanently deleted",
+      type: "PERMANENT_DELETE",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
