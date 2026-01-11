@@ -114,7 +114,7 @@ export const restoreTodo = async (req, res) => {
       { _id: id, userId: req.user._id },
       { isTrashed: false, deletedAt: null },
       { new: true }
-    );
+    ).populate("labels", "name");
 
     if (!todo) {
       return res
@@ -139,7 +139,7 @@ const deleteTodo = async (req, res) => {
     const todo = await Todo.findOne({
       _id: id,
       userId: req.user._id,
-    });
+    }).populate("labels", "name")
 
     if (!todo) {
       return res.status(404).json({
